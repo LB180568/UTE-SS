@@ -1,6 +1,6 @@
 # Syntax-oriented Shortcut: A syntax level perturbing algorithm for preventing text data from being learned
 
-This repository provides the source code for IJCAI2024 blind review.
+This repository provides the source code for TNNLS blind review.
 
 
 ## Introduction
