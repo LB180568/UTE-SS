@@ -33,6 +33,9 @@ if __name__ == '__main__':
     all_class_result_file = args.pool
     output_filename = directory +"output.txt"
 
+    current_parse = f"./temp/{output_filename_pure_parses}_high3.source"
+    current_template = f"./temp/{directory_paser}current_templatee_pool.txt"
+
 
 
     # #--------------------------------1 parse template---------------------------------------------------
@@ -53,12 +56,83 @@ if __name__ == '__main__':
     #
     #
     #
+    ####  --------------------------1.5 update candidate syntax pool------------------------------
+
+    from nltk import Tree
+
+    import re
+    def prune_tree(t, max_depth, current_depth=1):
+
+        if current_depth >= max_depth:
+            return Tree(t.label(), [])
+        else:
+
+            pruned_children = []
+            for child in t:
+                if isinstance(child, Tree):
+                    pruned_children.append(prune_tree(child, max_depth, current_depth + 1))
+                else:
+                    pruned_children.append(child)
+            return Tree(t.label(), pruned_children)
+    def reduce_spaces(text):
+        text = text.replace('\n', '')
+        return re.sub(r'\s+', ' ', text)
+
+    src_pure_parses = [line.strip("\n") for line in open("temp/"+output_filename_pure_parses+".source", "r", encoding="utf-8").readlines()]
+    output_file_pruned_parses = open(current_parse, "w+", encoding="utf-8")
+
+    for i, parse in enumerate(src_pure_parses):
+        try:
+            t = Tree.fromstring(parse)
+            pruned_tree = prune_tree(t, 3)
+            output_file_pruned_parses.write(reduce_spaces(str(pruned_tree))+"\n")
+        except:
+            output_file_pruned_parses.write( "\n")
+
+    output_file_pruned_parses.close()
+    #
+    #
+    #
+    from helper.utils import *
+    from tqdm import tqdm
+    from collections import Counter
+    pruned_parses = [line.strip("\n") for line in open(current_parse, "r", encoding="utf-8").readlines()]
+
+    counter = Counter(pruned_parses)
+    # print(counter)
+    all_parses = []
+    for key, value in counter.items():
+        all_parses.append(key)
+    all_class_result = [all_parses[0]]
+    for par in tqdm(all_parses):
+        # break
+        a = my_step2_rouge(all_class_result, par)
+        if max(a)<0.6:
+            all_class_result.append(par)
+    all_class_result = all_class_result[0:num_class]
+    #
+    b = open(all_class_result_file, "r", encoding="utf-8")
+    out = b.read()
+    result_template = json.loads(out)
+
+    for par in tqdm(all_class_result):
+        # break
+        a = my_step2_rouge(result_template, par)
+        if max(a)<0.6:
+            result_template.append(par)
+    re = open(current_template, "w", encoding='UTF-8')
+    re.write(json.dumps(result_template))
+    re.close()
+
+
+
+
     #
     # #
     # #
     #----------------------------2 Automatically select a template-------------------------------
 
-    b = open(all_class_result_file, "r", encoding="utf-8")
+    b = open(current_template, "r", encoding="utf-8")
     out = b.read()
     all_class_result = json.loads(out)
 
